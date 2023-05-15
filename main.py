@@ -8,7 +8,7 @@ from datetime import datetime
 
 app = FastAPI()
 
-df = pd.read_csv('Datos\movies_data.csv', low_memory=False)
+df = pd.read_csv('Datos/movies_data.csv', low_memory=False)
 
 
 @app.get('/Home')
@@ -123,7 +123,7 @@ def retorno(pelicula: str):
 @app.get('/Recomendacion')
 def recomendacion(titulo: str):
 
-    peliculas = pd.read_csv("Datos\movies_dataML.csv", low_memory= False)
+    peliculas = pd.read_csv("Datos/movies_dataML.csv", low_memory= False)
     
     peliculas = peliculas.head(5000)
     
