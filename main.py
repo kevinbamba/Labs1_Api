@@ -67,7 +67,7 @@ def buscar_peliculas_por_franquicia(franquicia):
     '''Devuelve una lista de películas que pertenecen a la franquicia especificada'''
     peliculas_franquicia = []
     for indice, fila in df.iterrows():
-        if fila["collection_name"].lower() == franquicia.lower():
+        if fila["collection_name"] == franquicia:
             peliculas_franquicia.append(fila["title"])
     return peliculas_franquicia
 
@@ -89,7 +89,7 @@ def franquicia(franquicia):
 def peliculas_pais(pais):
     peliculas_de_pais = []
     for indice, fila in df.iterrows():
-        if fila["production_countries"].lower() == pais.lower():
+        if fila["production_countries"] == pais:
             peliculas_de_pais.append(fila["title"])
     return {'pais': pais, 'cantidad': len(peliculas_de_pais)}
 
@@ -144,8 +144,8 @@ def recomendacion(titulo: str):
 
     try:
         # encontrar la fila correspondiente al título ingresado
-        idx = peliculas[peliculas['title'].str.lower() ==
-                        titulo.lower()].index[0]
+        idx = peliculas[peliculas['title'] ==
+                        titulo].index[0]
 
         puntuaciones_similitud = list(enumerate(similitud_coseno[idx]))
 
