@@ -145,8 +145,7 @@ def recomendacion(titulo: str):
     similitud_coseno = cosine_similarity(caracteristicas_combinadas)
 
     try:
-        # encontrar la fila correspondiente al título ingresado
-        idx = peliculas[peliculas['title'].str.lower() ==   titulo.lower()].index[0]
+        idx = peliculas[peliculas['title'] ==  titulo].index[0]
 
         puntuaciones_similitud = list(enumerate(similitud_coseno[idx]))
 
