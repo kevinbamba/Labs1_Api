@@ -119,7 +119,7 @@ def retorno(pelicula: str):
             return {'pelicula': pelicula, 'inversion': inversion, 'ganancia': int(ganancia), 'retorno': round(retorno, 2), 'año': int(anio)}
     return {'error': f'No se encontró información para la película "{pelicula}"'}
 
-
+  
 @app.get('/Recomendacion')
 def recomendacion(titulo: str):
 
@@ -127,33 +127,32 @@ def recomendacion(titulo: str):
     
     peliculas = peliculas.head(5000)
     
-    vectorizer= TfidfVectorizer()
-    
-    titulo_vectorizado = vectorizer.fit_transform(
+    vectorizer_title = TfidfVectorizer()
+    titulo_vectorizado = vectorizer_title.fit_transform(
         peliculas['title'].fillna(''))
 
-    generos_vectorizados = vectorizer.fit_transform(
+
+    vectorizer_genres = TfidfVectorizer()
+    generos_vectorizados = vectorizer_genres.fit_transform(
         peliculas['genres'].fillna(''))
-    
-    
+
+  
     caracteristicas_combinadas = cosine_similarity(
         titulo_vectorizado) + cosine_similarity(
         generos_vectorizados)
+
 
     similitud_coseno = cosine_similarity(caracteristicas_combinadas)
 
     try:
         # encontrar la fila correspondiente al título ingresado
-        idx = peliculas[peliculas['title'] ==
-                        titulo].index[0]
+        idx = peliculas[peliculas['title'].str.lower() ==   titulo.lower()].index[0]
 
         puntuaciones_similitud = list(enumerate(similitud_coseno[idx]))
 
-        puntuaciones_similitud = sorted(
-            puntuaciones_similitud, key=lambda x: x[1], reverse=True)
+        puntuaciones_similitud = sorted(puntuaciones_similitud, key=lambda x: x[1], reverse=True)
 
-        peliculas_similares = [peliculas.iloc[i[0]]['title']
-                               for i in puntuaciones_similitud[1:6]]
+        peliculas_similares = [peliculas.iloc[i[0]]['title'] for i in puntuaciones_similitud[1:6]]
 
         return peliculas_similares
 
