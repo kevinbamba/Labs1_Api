@@ -123,11 +123,13 @@ def retorno(pelicula: str):
     
 datoML = pd.read_csv("Datos/movies_dataML.csv", low_memory=False)
 
-genres_dum = datoML["genres"].str.get_dummies(sep=", ")
+caracteristicas = datoML[["genres","spoken_languages","popularity","vote_average"]]
 
-language_dum = datoML["spoken_languages"].str.get_dummies(sep=",")
+genres_dum = caracteristicas["genres"].str.get_dummies(sep=", ")
 
-datom_c = pd.concat([language_dum,genres_dum, datoML[["popularity", "vote_average"]]], axis=1)
+language_dum = caracteristicas["spoken_languages"].str.get_dummies(sep=",")
+
+datom_c = pd.concat([language_dum,genres_dum, caracteristicas[["popularity", "vote_average"]]], axis=1)
 
 imputer = SimpleImputer(strategy='most_frequent')
 
@@ -146,12 +148,12 @@ model.fit(X_scaled)
 def recomendacion(titulo: str):
     '''Ingresas un nombre de película y te recomienda 5 similares'''
 
-    movie_index = df[df['title'] == titulo].index[0]
+    movie_index = datoML[datoML['title'] == titulo].index[0]
 
     X_movie = X_scaled[movie_index].reshape(1, -1)
 
     distances, indices = model.kneighbors(X_movie)
-    Recomendacion = df.iloc[indices[0]]['title'].tolist()
+    Recomendacion = datoML.iloc[indices[0]]['title'].tolist()
 
     respuesta = {}
     for i, movie in enumerate(Recomendacion[:5]):
