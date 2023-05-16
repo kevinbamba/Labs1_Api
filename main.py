@@ -121,7 +121,7 @@ def retorno(pelicula: str):
 
 #Preparamos el Modelo 
     
-datoML = pd.read_csv("Datos\movies_dataML.csv", low_memory=False)
+datoML = pd.read_csv("Datos/movies_dataML.csv", low_memory=False)
 
 genres_dum = datoML["genres"].str.get_dummies(sep=", ")
 
