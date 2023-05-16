@@ -9,7 +9,7 @@ from datetime import datetime
 app = FastAPI()
 
 df = pd.read_csv('Datos/movies_data.csv', low_memory=False)
-
+Datoml = pd.read_csv("Datos/movies_dataML.csv", low_memory= False)
 
 @app.get('/Home')
 def home():
@@ -119,31 +119,25 @@ def retorno(pelicula: str):
             return {'pelicula': pelicula, 'inversion': inversion, 'ganancia': int(ganancia), 'retorno': round(retorno, 2), 'año': int(anio)}
     return {'error': f'No se encontró información para la película "{pelicula}"'}
 
-  
+#Con los datosML vectorizamos las columnas 
+Datoml = Datoml.head(5000)
+    
+vectorizer_title = TfidfVectorizer()
+titulo_vectorizado = vectorizer_title.fit_transform(Datoml['title'].fillna(''))
+
+vectorizer_genres = TfidfVectorizer()
+generos_vectorizados = vectorizer_genres.fit_transform(Datoml['genres'].fillna(''))
+
+caracteristicas_combinadas = cosine_similarity(titulo_vectorizado) + cosine_similarity(generos_vectorizados)
+
+similitud_coseno = cosine_similarity(caracteristicas_combinadas)  
+ 
 @app.get('/Recomendacion')
 def recomendacion(titulo: str):
 
-    peliculas = pd.read_csv("Datos/movies_dataML.csv", low_memory= False)
-
-    peliculas = peliculas.head(5000)
-    
-    vectorizer_title = TfidfVectorizer()
-    titulo_vectorizado = vectorizer_title.fit_transform(
-        peliculas['title'].fillna(''))
-
-    vectorizer_genres = TfidfVectorizer()
-    generos_vectorizados = vectorizer_genres.fit_transform(
-        peliculas['genres'].fillna(''))
-
-    caracteristicas_combinadas = cosine_similarity(
-        titulo_vectorizado) + cosine_similarity(
-        generos_vectorizados)
-
-    similitud_coseno = cosine_similarity(caracteristicas_combinadas)
-
     try:
         
-        idx = peliculas[peliculas['title'].str.lower() ==
+        idx = Datoml[Datoml['title'].str.lower() ==
                         titulo.lower()].index[0]
 
         puntuaciones_similitud = list(enumerate(similitud_coseno[idx]))
@@ -151,7 +145,7 @@ def recomendacion(titulo: str):
         puntuaciones_similitud = sorted(
             puntuaciones_similitud, key=lambda x: x[1], reverse=True)
 
-        peliculas_similares = [peliculas.iloc[i[0]]['title']
+        peliculas_similares = [Datoml.iloc[i[0]]['title']
                                for i in puntuaciones_similitud[1:6]]
 
         return peliculas_similares
