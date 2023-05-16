@@ -1,15 +1,15 @@
-
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
 from typing import Dict
 from fastapi import FastAPI
 import pandas as pd
 from datetime import datetime
+from sklearn.neighbors import NearestNeighbors
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import MinMaxScaler
 
 app = FastAPI()
 
 df = pd.read_csv('Datos/movies_data.csv', low_memory=False)
-Datoml = pd.read_csv("Datos/movies_dataML.csv", low_memory= False)
+
 
 @app.get('/Home')
 def home():
@@ -119,36 +119,42 @@ def retorno(pelicula: str):
             return {'pelicula': pelicula, 'inversion': inversion, 'ganancia': int(ganancia), 'retorno': round(retorno, 2), 'año': int(anio)}
     return {'error': f'No se encontró información para la película "{pelicula}"'}
 
-#Con los datosML vectorizamos las columnas 
-Datoml = Datoml.head(5000)
+#Preparamos el Modelo 
     
-vectorizer_title = TfidfVectorizer()
-titulo_vectorizado = vectorizer_title.fit_transform(Datoml['title'].fillna(''))
+datoML = pd.read_csv("Datos\movies_dataML.csv", low_memory=False)
 
-vectorizer_genres = TfidfVectorizer()
-generos_vectorizados = vectorizer_genres.fit_transform(Datoml['genres'].fillna(''))
+genres_dum = datoML["genres"].str.get_dummies(sep=", ")
 
-caracteristicas_combinadas = cosine_similarity(titulo_vectorizado) + cosine_similarity(generos_vectorizados)
+language_dum = datoML["spoken_languages"].str.get_dummies(sep=",")
 
-similitud_coseno = cosine_similarity(caracteristicas_combinadas)  
- 
+datom_c = pd.concat([language_dum,genres_dum, datoML[["popularity", "vote_average"]]], axis=1)
+
+imputer = SimpleImputer(strategy='most_frequent')
+
+X_imputed = imputer.fit_transform(datom_c)
+
+scaler = MinMaxScaler()
+
+X_scaled = scaler.fit_transform(X_imputed)
+
+model = NearestNeighbors()
+
+model.fit(X_scaled)
+
+
 @app.get('/Recomendacion')
 def recomendacion(titulo: str):
+    '''Ingresas un nombre de película y te recomienda 5 similares'''
 
-    try:
-        
-        idx = Datoml[Datoml['title'].str.lower() ==
-                        titulo.lower()].index[0]
+    movie_index = df[df['title'] == titulo].index[0]
 
-        puntuaciones_similitud = list(enumerate(similitud_coseno[idx]))
+    X_movie = X_scaled[movie_index].reshape(1, -1)
 
-        puntuaciones_similitud = sorted(
-            puntuaciones_similitud, key=lambda x: x[1], reverse=True)
+    distances, indices = model.kneighbors(X_movie)
+    Recomendacion = df.iloc[indices[0]]['title'].tolist()
 
-        peliculas_similares = [Datoml.iloc[i[0]]['title']
-                               for i in puntuaciones_similitud[1:6]]
+    respuesta = {}
+    for i, movie in enumerate(Recomendacion[:5]):
+        respuesta[str(i+1)] = str(movie)
 
-        return peliculas_similares
-
-    except:
-        return "Lo siento, no pude encontrar una coincidencia para ese título."
+    return {'Las Películas Recomendadas son': respuesta}
